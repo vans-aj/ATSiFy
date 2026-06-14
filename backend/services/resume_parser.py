@@ -1,6 +1,6 @@
 import io
 import magic
-from typing import Tuple, Optional, Tuple
+from typing import Tuple, Optional
 
 import pdfplumber
 from docx import Document
@@ -22,9 +22,6 @@ from backend.core.config import (
     SUPPORTED_MIME_TYPES
 )
 
-class FileParsingError(Exception):
-    pass
-
 class FileValidationError(Exception):
     pass
 
@@ -38,12 +35,12 @@ def validate_file(file_data:bytes, filename:str)->Tuple[bool, str, Optional[str]
         ), None
     
     if file_size_bytes==0:
-        return False, 'uploade file is empty...please check the file you have uploaded and try again'
+        return False, 'uploaded file is empty... please check the file you have uploaded and try again', None
     
     try:
         mime_type=magic.from_buffer(file_data, mime=True)
     except Exception as e:
-        return False, f"error deteminin the file type : {e}", None
+        return False, f"error determining the file type: {e}", None
     
     if mime_type not in SUPPORTED_MIME_TYPES:
         supported=', '.join(SUPPORTED_MIME_TYPES.keys()).upper()
@@ -216,13 +213,13 @@ def extract_text(file_data:bytes, file_type:str)->str:
         )
     
 def parse_resume_file(file_data: bytes, filename:str)->Tuple[str, dict]:
-    log_info(f'parsing file :{filename}', context='parse_Resume_file')
+    log_info(f'parsing file :{filename}', context='parse_resume_file')
 
     #phase01:validate file
     try:
         is_valid, error_msg, file_type=validate_file(file_data, filename)
         if not is_valid:
-            log_warning(f'valiudation failed for file {filename}', context='parse_resume_file')
+            log_warning(f'validation failed for file {filename}', context='parse_resume_file')
             raise FileValidationError(error_msg)
     
     except FileValidationError as e:
