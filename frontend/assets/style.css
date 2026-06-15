@@ -1,0 +1,406 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+:root {
+    --page: #f3f6f8;
+    --surface: #ffffff;
+    --surface-2: #f8fbfb;
+    --ink: #182230;
+    --muted: #667781;
+    --line: #d9e4e7;
+    --line-strong: #b7c8ce;
+    --brand: #0b5f73;
+    --brand-hover: #084c5c;
+    --brand-2: #d97706;
+    --brand-soft: #e6f3f6;
+    --success: #157f5b;
+    --warning: #b86b00;
+    --danger: #b83232;
+    --shadow: 0 18px 45px rgba(24, 34, 48, 0.08);
+}
+
+html,
+body,
+[class*="css"] {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.stApp {
+    background:
+        radial-gradient(circle at top left, rgba(11, 95, 115, 0.12) 0, rgba(11, 95, 115, 0) 360px),
+        linear-gradient(180deg, rgba(255, 249, 237, 0.78) 0, rgba(243, 246, 248, 0) 320px),
+        var(--page);
+    color: var(--ink);
+}
+
+.block-container {
+    max-width: 1220px;
+    padding: 2rem 2rem 4rem;
+}
+
+h1, h2, h3, h4 {
+    color: var(--ink);
+    letter-spacing: 0;
+}
+
+h1 {
+    font-size: 2.35rem;
+    line-height: 1.08;
+    font-weight: 800;
+}
+
+h2 {
+    font-size: 1.35rem;
+    font-weight: 750;
+    margin-top: 1.25rem;
+}
+
+h3 {
+    font-size: 1.02rem;
+    font-weight: 700;
+}
+
+p, li, label, .stMarkdown {
+    color: var(--ink);
+}
+
+hr {
+    border-color: var(--line);
+    margin: 1.5rem 0;
+}
+
+section[data-testid="stSidebar"] {
+    background: rgba(255, 255, 255, 0.97);
+    border-right: 1px solid var(--line);
+}
+
+section[data-testid="stSidebar"] > div {
+    padding-top: 1.6rem;
+}
+
+.sidebar-brand {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+    padding: 0.25rem 0 1.25rem;
+}
+
+.brand-mark {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--brand), #138a8a 58%, var(--brand-2));
+    border-radius: 10px;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.sidebar-brand h2 {
+    font-size: 1rem;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.sidebar-brand p {
+    color: var(--muted);
+    margin: 0.1rem 0 0;
+    font-size: 0.82rem;
+}
+
+.sidebar-rule {
+    height: 1px;
+    background: var(--line);
+    margin: 1.1rem 0;
+}
+
+section[data-testid="stSidebar"] div[role="radiogroup"] {
+    display: grid;
+    gap: 0.35rem;
+}
+
+section[data-testid="stSidebar"] label[data-baseweb="radio"] {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    padding: 0.55rem 0.65rem;
+    margin: 0;
+}
+
+section[data-testid="stSidebar"] label[data-baseweb="radio"]:has(input:checked) {
+    background: var(--brand-soft);
+    border-color: #b7dde5;
+}
+
+section[data-testid="stSidebar"] label[data-baseweb="radio"]:has(input:checked) p {
+    color: var(--brand);
+    font-weight: 750;
+}
+
+.stButton > button,
+.stDownloadButton > button,
+.stLinkButton > a,
+button[kind="formSubmit"] {
+    min-height: 2.55rem;
+    border-radius: 9px;
+    border: 1px solid var(--line-strong);
+    box-shadow: none;
+    font-weight: 650;
+}
+
+.stButton > button[kind="primary"],
+.stDownloadButton > button[kind="primary"],
+button[kind="formSubmit"] {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #ffffff;
+}
+
+.stButton > button:hover,
+.stDownloadButton > button:hover,
+.stLinkButton > a:hover {
+    border-color: var(--brand);
+}
+
+.stButton > button[kind="primary"]:hover,
+.stDownloadButton > button[kind="primary"]:hover,
+button[kind="formSubmit"]:hover {
+    background: var(--brand-hover);
+    border-color: var(--brand-hover);
+}
+
+.hero-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.7fr);
+    gap: 1.3rem;
+    align-items: stretch;
+    padding: 2rem;
+    background:
+        linear-gradient(135deg, rgba(11, 95, 115, 0.11), rgba(217, 119, 6, 0.08)),
+        var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+}
+
+.eyebrow {
+    color: var(--brand);
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.11em;
+    margin: 0 0 0.55rem;
+    text-transform: uppercase;
+}
+
+.hero-shell h1 {
+    max-width: 760px;
+    margin: 0;
+}
+
+.hero-copy,
+.page-heading p {
+    color: var(--muted);
+    max-width: 760px;
+    margin: 0.8rem 0 0;
+    font-size: 1rem;
+}
+
+.hero-panel {
+    background: linear-gradient(155deg, #0f2f3a 0%, #123f48 58%, #2f4a3f 100%);
+    color: #ffffff;
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 210px;
+}
+
+.hero-panel span {
+    color: #a9d6dc;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.hero-panel strong {
+    color: #ffffff;
+    display: block;
+    font-size: 1.35rem;
+    margin: 0.35rem 0;
+}
+
+.hero-panel p {
+    color: #d9e8e7;
+    margin: 0;
+}
+
+.page-heading {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1.45rem 1.6rem;
+    margin-bottom: 1.15rem;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+}
+
+.page-heading h1 {
+    margin: 0;
+}
+
+.metric-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+    margin: 1.15rem 0 1.4rem;
+}
+
+.metric-strip.compact {
+    grid-template-columns: minmax(180px, 0.35fr) minmax(0, 1fr);
+}
+
+.metric-strip div,
+.feature-card,
+.content-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 10px 24px rgba(24, 34, 48, 0.045);
+}
+
+.metric-strip span,
+.card-kicker,
+.panel-heading {
+    display: block;
+    color: var(--muted);
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.metric-strip strong {
+    display: block;
+    color: var(--ink);
+    font-size: 1.05rem;
+    margin-top: 0.35rem;
+}
+
+.feature-card {
+    min-height: 150px;
+}
+
+.feature-card h3,
+.content-card h3 {
+    margin: 0.45rem 0 0.35rem;
+}
+
+.feature-card p,
+.content-card p,
+.content-card li {
+    color: var(--muted);
+}
+
+.workflow-bar {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: 0.5rem 0 1rem;
+}
+
+.workflow-bar span {
+    background: #fffaf0;
+    color: #65410b;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.42rem 0.72rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.section-shell {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1rem;
+}
+
+div[data-testid="stMetric"],
+div[data-testid="stExpander"] {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+}
+
+div[data-testid="stMetric"] {
+    padding: 0.8rem 0.9rem;
+}
+
+div[data-testid="stFileUploader"] section {
+    background: var(--surface-2);
+    border: 1px dashed var(--line-strong);
+    border-radius: 12px;
+}
+
+.stTextInput input,
+.stTextArea textarea {
+    border-radius: 9px;
+    border-color: var(--line-strong);
+}
+
+.stAlert {
+    border-radius: 11px;
+    border: 1px solid var(--line);
+}
+
+.score-panel {
+    text-align: center;
+    padding: 1.65rem;
+    border: 1px solid;
+    border-radius: 14px;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+}
+
+.score-panel .score-label {
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    margin: 0 0 0.2rem;
+    text-transform: uppercase;
+}
+
+.score-panel h1 {
+    font-size: 4rem;
+    line-height: 1;
+    margin: 0;
+}
+
+.score-panel h3 {
+    margin: 0.45rem 0 0.25rem;
+}
+
+.score-panel p {
+    color: #4f626c;
+    margin: 0.5rem 0 0;
+}
+
+@media (max-width: 900px) {
+    .block-container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .hero-shell,
+    .metric-strip,
+    .metric-strip.compact {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-shell {
+        padding: 1.35rem;
+    }
+}

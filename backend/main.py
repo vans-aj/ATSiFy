@@ -11,6 +11,7 @@ from backend.core.config import(
     SPACY_MODEL_PRIMARY, 
     SPACY_MODEL_SECONDARY, SENTENCE_TRANSFORMER_MODEL
 )
+
 from backend.api.routes import router
 
 logger=logging.getLogger('ats_resume_scorer')

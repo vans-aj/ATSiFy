@@ -163,11 +163,12 @@ async def generate_pdf(
     data: AnalysisResponse,
     user_id: str = Depends(get_current_user),
 ):
-    from backend.services.report_generator import generate_html_reports
-    from backend.services.pdf_export import generate_combined_pdf
     from fastapi.responses import Response
 
     try:
+        from backend.services.report_generator import generate_html_reports
+        from backend.services.pdf_export import generate_combined_pdf
+
         html_docs = generate_html_reports(data.model_dump())
         pdf_bytes = generate_combined_pdf(html_docs)
 
@@ -188,18 +189,19 @@ async def generate_history_pdf(
     analysis_id: str,
     user_id: str = Depends(get_current_user),
 ):
-    from backend.database.supabase_db import get_user_history
-    from backend.services.report_generator import generate_html_reports
-    from backend.services.pdf_export import generate_combined_pdf
     from fastapi.responses import Response
 
-    history = await get_user_history(user_id)
-    analysis_data = next((item["analysis_result"] for item in history if item["id"] == analysis_id), None)
-
-    if not analysis_data:
-        raise HTTPException(status_code=404, detail="Analysis not found")
-
     try:
+        from backend.database.supabase_db import get_user_history
+        from backend.services.report_generator import generate_html_reports
+        from backend.services.pdf_export import generate_combined_pdf
+
+        history = await get_user_history(user_id)
+        analysis_data = next((item["analysis_result"] for item in history if item["id"] == analysis_id), None)
+
+        if not analysis_data:
+            raise HTTPException(status_code=404, detail="Analysis not found")
+
         html_docs = generate_html_reports(analysis_data)
         pdf_bytes = generate_combined_pdf(html_docs)
 
@@ -210,6 +212,8 @@ async def generate_history_pdf(
                 "Content-Disposition": f"attachment; filename=ats_report_{analysis_id}.pdf"
             }
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f'Failed to generate PDF for history: {e}')
         raise HTTPException(status_code=500, detail=f"Failed to generate PDF: {e}")

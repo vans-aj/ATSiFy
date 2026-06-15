@@ -1,17 +1,32 @@
 import io
 import logging
+import os
+from pathlib import Path
 
 try:
+    homebrew_lib = Path("/opt/homebrew/lib")
+    if homebrew_lib.exists():
+        existing = os.environ.get("DYLD_LIBRARY_PATH", "")
+        paths = [str(homebrew_lib)]
+        if existing:
+            paths.append(existing)
+        os.environ["DYLD_LIBRARY_PATH"] = ":".join(paths)
+
     from weasyprint import HTML, CSS
     WEASYPRINT_INSTALLED = True
-except ImportError:
+    WEASYPRINT_IMPORT_ERROR = None
+except Exception as exc:
     WEASYPRINT_INSTALLED = False
+    WEASYPRINT_IMPORT_ERROR = exc
 
 logger = logging.getLogger('ats_resume_scorer')
 
 def generate_combined_pdf(html_docs: dict[str, str]) -> bytes:
     if not WEASYPRINT_INSTALLED:
-        raise ImportError("WeasyPrint is not installed. PDF generation unavailable.")
+        raise RuntimeError(
+            "PDF generation unavailable. WeasyPrint could not load its native dependencies. "
+            f"Original error: {WEASYPRINT_IMPORT_ERROR}"
+        )
         
     documents = []
     
