@@ -1,8 +1,9 @@
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI,Request
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from backend.core.config import(
     ALLOWED_ORIGINS, 
     APP_DESCRIPTION, 
@@ -13,6 +14,7 @@ from backend.core.config import(
 )
 
 from backend.api.routes import router
+
 
 logger=logging.getLogger('ats_resume_scorer')
 
@@ -61,19 +63,12 @@ app.add_middleware(
 
 app.include_router(router)
 
+
+
 @app.get('/')
-async def root():
-    return {
-        'name':      'ATS Resume Analyzer API',
-        'version':   '2.0.0',
-        'endpoints': {
-            'POST   /api/v1/analyze-resume': 'Analyze a resume',
-            'GET    /api/v1/history':        'Get user history',
-            'DELETE /api/v1/history/:id':    'Delete a history entry',
-            'GET    /api/v1/health':         'Health check',
-            'POST   /api/v1/generate-pdf':   'Generate PDF report from data',
-        },
-    }
+async def root(request : Request):
+    return {"message": "Welcome to the ATS Resume Analyzer API!"}
+        
 
 if __name__=='__main__':
     import uvicorn

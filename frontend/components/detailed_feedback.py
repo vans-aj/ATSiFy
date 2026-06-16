@@ -17,7 +17,7 @@ def _group_by_severity(issues: List[Dict[str, Any]]) -> Dict[str, List[Dict[str,
 
 
 def _render_issue(issue: Dict[str, Any]) -> None:
-    severity, text_color, bg_color = get_severity_style(issue.get("severity_level"))
+    severity, text_color, severity_class = get_severity_style(issue.get("severity_level"))
     title = issue.get("issue_title", "Untitled issue")
     impact = issue.get("ats_impact", "")
     explanation = issue.get("explanation", "")
@@ -28,10 +28,9 @@ def _render_issue(issue: Dict[str, Any]) -> None:
 
     st.markdown(
         f"""
-        <div style="border-left:4px solid {text_color}; background-color:{bg_color};
-                    padding:0.75rem 1rem; border-radius:6px; margin-bottom:0.5rem;">
+        <div class="issue-block {severity_class}">
             <strong style="color:{text_color};">{severity}: {title}</strong>
-            <span style="color:#666; margin-left:0.5rem; font-size:0.85rem;">{impact}</span>
+            <span>{impact}</span>
         </div>
         """,
         unsafe_allow_html=True,

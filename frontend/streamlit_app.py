@@ -124,7 +124,7 @@ with st.sidebar:
             with st.form("signin_form", clear_on_submit=False):
                 email = st.text_input("Email", key="signin_email")
                 password = st.text_input("Password", type="password", key="signin_pw")
-                submitted = st.form_submit_button("Sign in", use_container_width=True)
+                submitted = st.form_submit_button("Sign in", use_container_width=True, type="primary")
             if submitted:
                 result = supabase_client.sign_in_with_password(email, password)
                 if "error" in result:
@@ -140,7 +140,7 @@ with st.sidebar:
             with st.form("signup_form", clear_on_submit=False):
                 email_up = st.text_input("Email", key="signup_email")
                 password_up = st.text_input("Password (min 6 chars)", type="password", key="signup_pw")
-                submitted_up = st.form_submit_button("Create account", use_container_width=True)
+                submitted_up = st.form_submit_button("Create account", use_container_width=True, type="primary")
             if submitted_up:
                 result = supabase_client.sign_up_with_password(email_up, password_up)
                 if "error" in result:
@@ -156,7 +156,7 @@ with st.sidebar:
                     st.session_state.user_email    = result["email"]
                 st.rerun()
 
-        st.markdown("<div style='text-align:center; margin: 8px 0; color:#94a3b8;'>or</div>",
+        st.markdown("<div class='auth-divider'>or</div>",
                     unsafe_allow_html=True)
 
         oauth = supabase_client.google_oauth_url()

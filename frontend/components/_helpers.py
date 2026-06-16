@@ -4,10 +4,10 @@ from typing import Tuple
 def get_score_color(score: float) -> Tuple[str, str]:
     """Return (text_color, background_color) for a 0–100 score."""
     if score >= 80:
-        return "#2e7d32", "#e8f5e9"  # green
+        return "#34d399", "score-good"
     if score >= 60:
-        return "#f57c00", "#fff3e0"  # orange
-    return "#c62828", "#ffebee"      # red
+        return "#fbbf24", "score-mid"
+    return "#fb7185", "score-low"
 
 
 def get_score_label(score: float) -> str:
@@ -30,7 +30,7 @@ def get_severity_style(severity: str) -> Tuple[str, str, str]:
     """
     level = (severity or "").lower()
     if level in ("critical", "high"):
-        return "High", "#b42318", "#fef3f2"
+        return "High", "#fb7185", "issue-high"
     if level == "medium":
-        return "Medium", "#b54708", "#fffaeb"
-    return "Low", "#067647", "#ecfdf3"
+        return "Medium", "#fbbf24", "issue-medium"
+    return "Low", "#34d399", "issue-low"
