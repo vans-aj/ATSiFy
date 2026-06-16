@@ -747,3 +747,22 @@
 2026-06-16 22:25:36,353 - ERROR - Failed to generate PDF: 'action_items.html' not found in search path: '/Users/vansajrawat/Desktop/outer atsify/backend/services/../templates'
 2026-06-16 22:25:38,701 - ERROR - Failed to generate PDF: 'action_items.html' not found in search path: '/Users/vansajrawat/Desktop/outer atsify/backend/services/../templates'
 2026-06-16 22:25:39,925 - ERROR - Failed to generate PDF: 'action_items.html' not found in search path: '/Users/vansajrawat/Desktop/outer atsify/backend/services/../templates'
+2026-06-16 22:52:06,504 - INFO - shutting down the api!!
+2026-06-16 22:52:07,212 - INFO - Starting ATS Resume Analyzer API...
+2026-06-16 22:52:07,212 - INFO - Loading spaCy NLP model: en_core_web_md
+2026-06-16 22:52:10,449 - INFO - Loaded en_core_web_md
+2026-06-16 22:52:10,449 - INFO - Loading SentenceTransformer: all-MiniLM-L6-v2
+2026-06-16 22:52:23,128 - INFO - Loaded all-MiniLM-L6-v2
+2026-06-16 22:52:23,128 - INFO - All models loaded. API is ready to serve requests.
+2026-06-16 22:52:23,236 - INFO - shutting down the api!!
+2026-06-16 22:52:23,913 - INFO - Starting ATS Resume Analyzer API...
+2026-06-16 22:52:23,913 - INFO - Loading spaCy NLP model: en_core_web_md
+2026-06-16 22:52:26,056 - INFO - Loaded en_core_web_md
+2026-06-16 22:52:26,057 - INFO - Loading SentenceTransformer: all-MiniLM-L6-v2
+2026-06-16 22:52:36,841 - INFO - Loaded all-MiniLM-L6-v2
+2026-06-16 22:52:36,842 - INFO - All models loaded. API is ready to serve requests.
+2026-06-16 22:52:36,944 - INFO - shutting down the api!!
+2026-06-16 22:52:37,527 - INFO - Starting ATS Resume Analyzer API...
+2026-06-16 22:52:37,527 - INFO - Loading spaCy NLP model: en_core_web_md
+2026-06-16 22:52:40,756 - INFO - Loaded en_core_web_md
+2026-06-16 22:52:40,756 - INFO - Loading SentenceTransformer: all-MiniLM-L6-v2
