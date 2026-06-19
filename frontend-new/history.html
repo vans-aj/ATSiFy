@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>History - ATSiFy</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+</head>
+<body>
+  <button class="sidebar-toggle" id="sidebar-toggle">&#9776;</button>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <div class="app-wrapper">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+      <div class="page-header animate-fade-in-up">
+        <span class="eyebrow">Saved reports</span>
+        <h1>Analysis History</h1>
+        <p>Review previous resume analyses saved against your account.</p>
+      </div>
+
+      <div id="history-content"></div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initSidebar } from '/static/js/sidebar.js';
+    import { isLoggedIn, getAuth } from '/static/js/auth.js';
+    import { getHistory, deleteHistoryEntry, getHistoryPdf } from '/static/js/api.js';
+
+    initSidebar();
+
+    const container = document.getElementById('history-content');
+
+    async function loadHistory() {
+      if (!isLoggedIn()) {
+        container.innerHTML = `
+          <div class="alert alert-warning">Sign in from the sidebar to view your history.</div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="spinner-wrap">
+          <div class="spinner"></div>
+          <div class="spinner-text">Loading history...</div>
+        </div>
+      `;
+
+      try {
+        const history = await getHistory();
+
+        if (!history || !history.length) {
+          container.innerHTML = `
+            <div class="empty-state animate-fade-in-up">
+              <div class="icon">&#128203;</div>
+              <h3>No analyses yet</h3>
+              <p>Run a scoring on the Analyzer page first.</p>
+              <a href="/static/analyzer.html" class="btn btn-primary" style="margin-top:1rem;">Go to Analyzer</a>
+            </div>
+          `;
+          return;
+        }
+
+        const auth = getAuth();
+        let html = `
+          <div class="metric-strip animate-fade-in-up">
+            <div class="metric-item">
+              <div class="label">Total analyses</div>
+              <div class="value">${history.length}</div>
+            </div>
+            <div class="metric-item">
+              <div class="label">Account</div>
+              <div class="value" style="font-size:.88rem;">${auth?.email || 'Signed in'}</div>
+            </div>
+          </div>
+          <div class="stagger">
+        `;
+
+        history.forEach((entry, idx) => {
+          const filename = entry.filename || 'resume';
+          const atsScore = parseFloat(entry.ats_score || 0);
+          const createdAt = entry.created_at || '';
+          const analysis = entry.analysis_result || {};
+          const cs = analysis.component_scores || {};
+          const jdc = analysis.jd_comparison || analysis.jd_match_analysis;
+          const entryId = entry.id || '';
+          const scoreColor = atsScore >= 80 ? 'var(--success)' : atsScore >= 60 ? 'var(--warning)' : 'var(--danger)';
+
+          html += `
+            <div class="history-entry" id="entry-${idx}">
+              <div class="history-header" onclick="document.getElementById('body-${idx}').classList.toggle('open');">
+                <div>
+                  <span class="file-name">${filename}</span>
+                  <span class="meta" style="margin-left:.75rem;">Score: <strong style="color:${scoreColor};">${Math.round(atsScore)}/100</strong></span>
+                </div>
+                <span class="meta">${createdAt}</span>
+              </div>
+              <div class="history-body" id="body-${idx}">
+                <div class="history-body-inner">
+                  <div class="score-mini-grid">
+                    <div class="score-mini-item"><div class="label">Overall</div><div class="val">${Math.round(atsScore)}/100</div></div>
+                    <div class="score-mini-item"><div class="label">Formatting</div><div class="val">${Math.round(cs.formatting || 0)}/20</div></div>
+                    <div class="score-mini-item"><div class="label">Keywords</div><div class="val">${Math.round(cs.keywords || 0)}/25</div></div>
+                    <div class="score-mini-item"><div class="label">Content</div><div class="val">${Math.round(cs.content || 0)}/25</div></div>
+                    <div class="score-mini-item"><div class="label">Skill Val.</div><div class="val">${Math.round(cs.skill_validation || 0)}/15</div></div>
+                    <div class="score-mini-item"><div class="label">ATS Compat.</div><div class="val">${Math.round(cs.ats_compatibility || 0)}/15</div></div>
+                  </div>
+                  ${jdc ? `<p style="margin-top:.5rem;font-size:.88rem;"><strong>JD Match:</strong> ${Math.round(jdc.match_percentage || 0)}%</p>` : ''}
+                  <div style="display:flex;gap:.5rem;margin-top:.75rem;">
+                    ${entryId ? `<button class="btn btn-danger btn-sm" onclick="window._deleteEntry('${entryId}', ${idx})">Delete</button>` : ''}
+                    ${entryId ? `<button class="btn btn-sm" onclick="window._downloadPdf('${entryId}')">Download PDF</button>` : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        html += `</div>`;
+        container.innerHTML = html;
+
+      } catch (err) {
+        container.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+      }
+    }
+
+    // Global handlers for inline onclick
+    window._deleteEntry = async (id, idx) => {
+      if (!confirm('Delete this analysis?')) return;
+      try {
+        await deleteHistoryEntry(id);
+        const el = document.getElementById(`entry-${idx}`);
+        if (el) {
+          el.style.opacity = '0';
+          el.style.transform = 'translateX(-20px)';
+          el.style.transition = '.3s ease';
+          setTimeout(() => loadHistory(), 350);
+        }
+      } catch (err) {
+        alert('Delete failed: ' + err.message);
+      }
+    };
+
+    window._downloadPdf = async (id) => {
+      try {
+        const blob = await getHistoryPdf(id);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `ats_report_${id}.pdf`; a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        alert('PDF download failed: ' + err.message);
+      }
+    };
+
+    loadHistory();
+  </script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resources - ATSiFy</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+</head>
+<body>
+  <button class="sidebar-toggle" id="sidebar-toggle">&#9776;</button>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <div class="app-wrapper">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+      <div class="page-header animate-fade-in-up">
+        <span class="eyebrow">Reference</span>
+        <h1>Resources &amp; Tips</h1>
+        <p>Practical guidance for building resumes that parse cleanly and match target roles.</p>
+      </div>
+
+      <!-- ATS Tips -->
+      <h2 class="section-title animate-fade-in-up animate-delay-1">ATS Optimization Tips</h2>
+      <div class="info-grid stagger">
+        <div class="info-card" style="border-top: 3px solid var(--success);">
+          <h3 style="color:var(--success);">Recommended</h3>
+          <ul>
+            <li>Use standard section headings (Education, Experience, Skills)</li>
+            <li>Include relevant keywords from the job description</li>
+            <li>Use simple, clean formatting</li>
+            <li>List skills explicitly in a dedicated section</li>
+            <li>Quantify achievements with numbers and metrics</li>
+            <li>Use standard fonts: Arial, Calibri, or Times New Roman</li>
+            <li>Save as PDF or DOCX</li>
+          </ul>
+        </div>
+        <div class="info-card" style="border-top: 3px solid var(--danger);">
+          <h3 style="color:var(--danger);">Avoid</h3>
+          <ul>
+            <li>Tables and text boxes for layout</li>
+            <li>Headers or footers for important information</li>
+            <li>Images and graphics for core content</li>
+            <li>Unusual or decorative fonts</li>
+            <li>Multi-column layouts for critical sections</li>
+            <li>Keyword stuffing or invisible text</li>
+            <li>Abbreviations without spelling them out first</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Keywords by industry -->
+      <div style="margin-top:2.5rem;" class="animate-fade-in-up animate-delay-2">
+        <h2 class="section-title">Common ATS Keywords by Industry</h2>
+
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="tech">Technology</button>
+          <button class="tab-btn" data-tab="business">Business</button>
+          <button class="tab-btn" data-tab="creative">Creative</button>
+        </div>
+
+        <div class="tab-content active" id="tab-tech">
+          <div class="card">
+            <h3 style="margin-bottom:.75rem;">Software Development</h3>
+            <div style="display:flex;flex-wrap:wrap;gap:.35rem;">
+              <span class="tag">Python</span>
+              <span class="tag">Java</span>
+              <span class="tag">JavaScript</span>
+              <span class="tag">TypeScript</span>
+              <span class="tag">React</span>
+              <span class="tag">Django</span>
+              <span class="tag">Spring</span>
+              <span class="tag">Node.js</span>
+              <span class="tag">Git</span>
+              <span class="tag">Docker</span>
+              <span class="tag">Kubernetes</span>
+              <span class="tag">AWS</span>
+              <span class="tag">Agile</span>
+              <span class="tag">Scrum</span>
+              <span class="tag">CI/CD</span>
+              <span class="tag">REST API</span>
+              <span class="tag">Microservices</span>
+              <span class="tag">SQL</span>
+              <span class="tag">NoSQL</span>
+              <span class="tag">Machine Learning</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-business">
+          <div class="card">
+            <h3 style="margin-bottom:.75rem;">Business &amp; Management</h3>
+            <div style="display:flex;flex-wrap:wrap;gap:.35rem;">
+              <span class="tag">Project Management</span>
+              <span class="tag">Stakeholder Engagement</span>
+              <span class="tag">Budget Management</span>
+              <span class="tag">Strategic Planning</span>
+              <span class="tag">Team Leadership</span>
+              <span class="tag">Data Analysis</span>
+              <span class="tag">KPI Tracking</span>
+              <span class="tag">Cross-functional</span>
+              <span class="tag">Process Improvement</span>
+              <span class="tag">Change Management</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-creative">
+          <div class="card">
+            <h3 style="margin-bottom:.75rem;">Creative &amp; Design</h3>
+            <div style="display:flex;flex-wrap:wrap;gap:.35rem;">
+              <span class="tag">Adobe Creative Suite</span>
+              <span class="tag">UI/UX Design</span>
+              <span class="tag">Wireframing</span>
+              <span class="tag">Prototyping</span>
+              <span class="tag">Brand Identity</span>
+              <span class="tag">Visual Communication</span>
+              <span class="tag">Figma</span>
+              <span class="tag">Sketch</span>
+              <span class="tag">Motion Graphics</span>
+              <span class="tag">Typography</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Templates -->
+      <div style="margin-top:2.5rem;" class="animate-fade-in-up animate-delay-3">
+        <h2 class="section-title">ATS-Friendly Resume Templates</h2>
+        <div class="alert alert-info">Coming soon: Downloadable ATS-optimized resume templates for every industry.</div>
+      </div>
+
+      <!-- Quick checklist -->
+      <div style="margin-top:2.5rem;" class="animate-fade-in-up animate-delay-4">
+        <h2 class="section-title">Quick Pre-Submission Checklist</h2>
+        <div class="card">
+          <div style="display:grid;gap:.45rem;">
+            <label style="display:flex;align-items:center;gap:.5rem;font-size:.88rem;color:var(--ink-soft);cursor:pointer;">
+              <input type="checkbox" style="accent-color:var(--brand);width:16px;height:16px;" />
+              Resume is in PDF or DOCX format
+            </label>
+            <label style="display:flex;align-items:center;gap:.5rem;font-size:.88rem;color:var(--ink-soft);cursor:pointer;">
+              <input type="checkbox" style="accent-color:var(--brand);width:16px;height:16px;" />
+              Contact information is at the top (not in a header/footer)
+            </label>
+            <label style="display:flex;align-items:center;gap:.5rem;font-size:.88rem;color:var(--ink-soft);cursor:pointer;">
+              <input type="checkbox" style="accent-color:var(--brand);width:16px;height:16px;" />
+              Standard section headings are used
+            </label>
+            <label style="display:flex;align-items:center;gap:.5rem;font-size:.88rem;color:var(--ink-soft);cursor:pointer;">
+              <input type="checkbox" style="accent-color:var(--brand);width:16px;height:16px;" />
+              Keywords from the job description are included naturally
+            </label>
+            <label style="display:flex;align-items:center;gap:.5rem;font-size:.88rem;color:var(--ink-soft);cursor:pointer;">
+              <input type="checkbox" style="accent-color:var(--brand);width:16px;height:16px;" />
+              Achievements are quantified with numbers
+            </label>
+            <label style="display:flex;align-items:center;gap:.5rem;font-size:.88rem;color:var(--ink-soft);cursor:pointer;">
+              <input type="checkbox" style="accent-color:var(--brand);width:16px;height:16px;" />
+              No tables, text boxes, or images for core content
+            </label>
+            <label style="display:flex;align-items:center;gap:.5rem;font-size:.88rem;color:var(--ink-soft);cursor:pointer;">
+              <input type="checkbox" style="accent-color:var(--brand);width:16px;height:16px;" />
+              Single-column layout for critical sections
+            </label>
+            <label style="display:flex;align-items:center;gap:.5rem;font-size:.88rem;color:var(--ink-soft);cursor:pointer;">
+              <input type="checkbox" style="accent-color:var(--brand);width:16px;height:16px;" />
+              Skills are listed explicitly with evidence
+            </label>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initSidebar } from '/static/js/sidebar.js';
+    initSidebar();
+
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

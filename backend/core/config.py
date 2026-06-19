@@ -15,7 +15,12 @@ APP_VERSION='1.0.0'
 APP_DESCRIPTION='analyse resumes against job description using nlp + ml'
 
 ALLOWED_ORIGINS = [
-    "https://atsify-bth9xthwqtbxwzhwzjtmt2.streamlit.app" 
+    "https://atsify-bth9xthwqtbxwzhwzjtmt2.streamlit.app",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    "*",
 ]  
 
 #file 
