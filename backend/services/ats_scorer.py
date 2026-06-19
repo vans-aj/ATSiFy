@@ -1,12 +1,12 @@
 import re
 import spacy
-import numpy as np
 from sentence_transformers import SentenceTransformer
 from typing import Dict, List, Optional, Tuple
 
-from backend.utils.file_utils import log_warning
 from backend.core.config import SENTENCE_TRANSFORMER_MODEL
 from backend.utils.matching import fuzzy_match_keywords
+from backend.utils.similarity import compute_cosine_similarity
+from backend.utils.resume_helpers import extract_resume_sections
 
 ZIP_CODE_PATTERN = r'\b\d{5}(?:-\d{4})?\b'
 
@@ -73,21 +73,7 @@ def detect_location_info(text: str, nlp: spacy.Language) -> Dict:
     }
 
 def _calculate_semantic_similarity(skill: str, text: str, embedder: SentenceTransformer) -> float:
-    #similarity = (A · B) / (|A| × |B|)
-    if not skill or not text:
-        return 0.0
-    try:
-        skill_vec  = embedder.encode(skill, convert_to_tensor=False)
-        text_vec   = embedder.encode(text,  convert_to_tensor=False)
-
-        similarity = np.dot(skill_vec, text_vec) / (
-            np.linalg.norm(skill_vec) * np.linalg.norm(text_vec)
-        )
-
-        return float(max(0.0, min(1.0, similarity)))
-    except Exception as e:
-        log_warning(f"Similarity error for '{skill}': {e}", context='ats_scorer')
-        return 0.0
+    return compute_cosine_similarity(skill, text, embedder, context='ats_scorer')
 
 def _skill_matches(skill: str, text: str, embedder: SentenceTransformer, threshold: float) -> Tuple[bool, float]:
 
@@ -168,11 +154,12 @@ def _calc_formatting_score(parsed_resume: Dict, text: str) -> float:
 
     score = 0.0
 
-    exp_entries  = [e for e in parsed_resume.get('experience', []) if isinstance(e, dict)]
-    edu_entries  = [e for e in parsed_resume.get('education', [])  if isinstance(e, dict)]
-    skills       = parsed_resume.get('skills', [])
-    summary      = parsed_resume.get('professional_summary', '')
-    proj_entries = [p for p in parsed_resume.get('projects', [])   if isinstance(p, dict)]
+    sections = extract_resume_sections(parsed_resume)
+    exp_entries = sections['exp_entries']
+    edu_entries = sections['edu_entries']
+    skills = sections['skills']
+    summary = sections['summary']
+    proj_entries = sections['proj_entries']
 
     if exp_entries and any(e.get('job_title') or e.get('description') for e in exp_entries):
         score += 3.0
@@ -268,9 +255,10 @@ def _calc_ats_compatibility_score(
     if special_chars > 20:    score -= 2.0
     elif special_chars > 10:  score -= 1.0
 
-    exp_entries  = [e for e in parsed_resume.get('experience', []) if isinstance(e, dict)]
-    edu_entries  = [e for e in parsed_resume.get('education', [])  if isinstance(e, dict)]
-    skills_count = len(parsed_resume.get('skills', []))
+    sections = extract_resume_sections(parsed_resume)
+    exp_entries = sections['exp_entries']
+    edu_entries = sections['edu_entries']
+    skills_count = len(sections['skills'])
 
     exp_desc_len = sum(len(e.get('description', '')) for e in exp_entries)
     edu_desc_len = sum(len((e.get('degree') or '') + (e.get('institution') or '')) for e in edu_entries)  # Handle None to prevent string concatenation errors
@@ -379,78 +367,6 @@ def calculate_overall_score(
         'overall_interpretation':  interpretation,
         'penalties':               penalties,
         'bonuses':                 bonuses,}
-
-#Overall score calculation and interpretation
-def generate_strengths(
-    score_results: Dict,
-    skill_validation_results: Dict,
-    grammar_results: Dict,
-) -> List[str]:
-
-    strengths = []
-
-    if score_results['formatting_score']       >= 16:
-        strengths.append(' Well-structured with clear sections and bullet points')
-    if score_results['keywords_score']          >= 20:
-        strengths.append(' Strong keyword optimization and skills presence')
-    if score_results['content_score']           >= 20:
-        strengths.append(' Excellent use of action verbs and quantifiable achievements')
-    if score_results['skill_validation_score']  >= 12:
-        pct = skill_validation_results.get('validation_percentage', 0) * 100
-        strengths.append(f' {pct:.0f}% of skills are validated by projects')
-    if score_results['ats_compatibility_score'] >= 13:
-        strengths.append(' Excellent ATS compatibility with clean formatting')
-    if grammar_results.get('total_errors', 0)   == 0:
-        strengths.append(' Error-free grammar and spelling')
-
-    if not strengths:
-        strengths.append('Your resume has potential - focus on the recommendations below')
-    return strengths
-
-
-#Critical issues that could cause ATS rejection
-def generate_critical_issues(
-    score_results: Dict,
-    grammar_results: Dict,
-    location_results: Dict,
-) -> List[str]:
-    issues = []
-
-    critical_errors = len(grammar_results.get('critical_errors', []))
-    if critical_errors > 0:
-        issues.append(f' {critical_errors} critical grammar/spelling error(s) detected')
-    if location_results.get('privacy_risk') == 'high':
-        issues.append('High privacy risk: Remove detailed location information')
-    if score_results['formatting_score']       < 10:
-        issues.append(' Poor formatting: Add clear sections and bullet points')
-    if score_results['keywords_score']         < 12:
-        issues.append(' Insufficient keywords and skills')
-    if score_results['skill_validation_score'] < 7:
-        issues.append(' Most skills lack supporting evidence in projects')
-
-    return issues
-
-
-#Actionable improvements to enhance ATS performance
-def generate_improvements(
-    score_results: Dict,
-    skill_validation_results: Dict,
-) -> List[str]:
-    improvements = []
-
-    if 12 <= score_results['formatting_score']       < 16:
-        improvements.append('Add more bullet points and improve section organization')
-    if 14 <= score_results['keywords_score']          < 20:
-        improvements.append('Include more relevant keywords and technical skills')
-    if 14 <= score_results['content_score']           < 20:
-        improvements.append('Add more quantifiable achievements and action verbs')
-    if 7  <= score_results['skill_validation_score']  < 12:
-        unvalidated_count = len(skill_validation_results.get('unvalidated_skills', []))
-        improvements.append(f'Validate {unvalidated_count} skill(s) by adding relevant project details')
-    if 9  <= score_results['ats_compatibility_score'] < 13:
-        improvements.append('Simplify formatting for better ATS compatibility')
-
-    return improvements
 
 #Interpretation of overall score
 def _generate_score_interpretation(overall_score: float) -> str:

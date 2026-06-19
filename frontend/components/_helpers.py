@@ -1,5 +1,23 @@
 from typing import Tuple
 
+import requests
+import streamlit as st
+
+
+def show_backend_error(exc: Exception) -> None:
+    if isinstance(exc, requests.ConnectionError):
+        st.error("Could not reach the backend. Is `uvicorn backend.main:app` running on port 8000?")
+    elif isinstance(exc, requests.Timeout):
+        st.error("The backend took too long to respond. Try a smaller resume or check the server logs.")
+    elif isinstance(exc, requests.HTTPError) and exc.response is not None:
+        try:
+            detail = exc.response.json().get("detail", exc.response.text)
+        except ValueError:
+            detail = exc.response.text
+        st.error(f"Backend returned {exc.response.status_code}: {detail}")
+    else:
+        st.error(f"Unexpected error: {exc}")
+
 
 def get_score_color(score: float) -> Tuple[str, str]:
     """Return (text_color, background_color) for a 0–100 score."""

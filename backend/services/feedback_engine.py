@@ -3,6 +3,7 @@
 import re
 from typing import List, Dict, Any, Optional
 from backend.models.schemas import IssueDetail
+from backend.utils.resume_helpers import extract_resume_sections
 
 def analyze_issues(
         resume_text: str, 
@@ -19,10 +20,11 @@ def analyze_issues(
 
     #Unpack frequently-used structured fields once at the top
 
-    exp_entries  = [e for e in parsed_resume.get('experience', []) if isinstance(e, dict)]
-    edu_entries  = [e for e in parsed_resume.get('education',  []) if isinstance(e, dict)]
-    proj_entries = [p for p in parsed_resume.get('projects',   []) if isinstance(p, dict)]
-    summary      = (parsed_resume.get('professional_summary') or '').strip()  # Handle None to prevent string concatenation errors
+    sections = extract_resume_sections(parsed_resume)
+    exp_entries = sections['exp_entries']
+    edu_entries = sections['edu_entries']
+    proj_entries = sections['proj_entries']
+    summary = sections['summary']
 
     #Build a combined experience text for regex-based checks that still need text
     experience_text = '\n'.join(e.get('description', '') for e in exp_entries).strip()
