@@ -5,10 +5,10 @@ import {
 } from './auth.js';
 
 const NAV_ITEMS = [
-  { label: 'Home',      href: '/static/index.html',      icon: '&#9679;' },
-  { label: 'Analyze',   href: '/static/analyzer.html',   icon: '&#9670;' },
-  { label: 'History',   href: '/static/history.html',    icon: '&#9636;' },
-  { label: 'Resources', href: '/static/resources.html',  icon: '&#9733;' },
+  { label: 'Home',      href: '/',          icon: '&#9679;' },
+  { label: 'Analyze',   href: '/analyzer',  icon: '&#9670;' },
+  { label: 'History',   href: '/history',   icon: '&#9636;' },
+  { label: 'Resources', href: '/resources', icon: '&#9733;' },
 ];
 
 export function initSidebar() {
