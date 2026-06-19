@@ -1,27 +1,21 @@
 from typing import List, Dict
-import numpy as np
-import spacy
-from sentence_transformers import SentenceTransformer
 
-from typing import List, Dict
 import numpy as np
 import spacy
 from sentence_transformers import SentenceTransformer
+from rapidfuzz import fuzz
 
 from backend.utils.matching import fuzzy_match_keywords, normalize_skill
-from rapidfuzz import fuzz
+from backend.utils.similarity import compute_cosine_similarity
 
 
 def calculate_semantic_similarity(
     resume_text: str, jd_text: str, embedder: SentenceTransformer
 ) -> float:
-    resume_emb = embedder.encode(resume_text[:5000], convert_to_tensor=False)
-    jd_emb     = embedder.encode(jd_text[:5000], convert_to_tensor=False)
-
-    similarity = np.dot(resume_emb, jd_emb) / (
-        np.linalg.norm(resume_emb) * np.linalg.norm(jd_emb)
+    return compute_cosine_similarity(
+        resume_text, jd_text, embedder,
+        max_length=5000, context='jd_matcher',
     )
-    return float(np.clip(similarity, 0.0, 1.0))
 
 
 def identify_matched_keywords(

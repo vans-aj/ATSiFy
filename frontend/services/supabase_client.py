@@ -2,7 +2,6 @@ import os
 import logging
 from pathlib import Path
 from typing import Any, Dict
-from urllib.parse import urlsplit, urlunsplit
 import streamlit as st
 from supabase import Client, create_client
 
@@ -27,20 +26,7 @@ def _secret(key: str, section: str = 'supabase') -> str:
         return ''
 
 
-def _normalize_supabase_url(url: str) -> str:
-    """Return the Supabase project base URL, even if an API path was pasted."""
-    if not url:
-        return ''
-
-    parts = urlsplit(url.strip())
-    path = parts.path.rstrip('/')
-    for suffix in ('/rest/v1', '/auth/v1', '/storage/v1'):
-        if path == suffix or path.endswith(suffix):
-            path = path[: -len(suffix)]
-            break
-
-    return urlunsplit((parts.scheme, parts.netloc, path.rstrip('/'), '', ''))
-
+from backend.core.config import _normalize_supabase_url
 
 SUPABASE_URL = _normalize_supabase_url(_secret('SUPABASE_URL'))
 SUPABASE_ANON_KEY = _secret('SUPABASE_ANON_KEY')

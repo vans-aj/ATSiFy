@@ -2,15 +2,7 @@ import requests
 import streamlit as st
 
 from frontend.services import api_client
-
-
-def _show_backend_error(exc: Exception) -> None:
-    if isinstance(exc, requests.ConnectionError):
-        st.error("Could not reach the backend. Is it running on port 8000?")
-    elif isinstance(exc, requests.HTTPError) and exc.response is not None:
-        st.error(f"Backend returned {exc.response.status_code}: {exc.response.text}")
-    else:
-        st.error(f"Unexpected error: {exc}")
+from frontend.components._helpers import show_backend_error
 
 
 def render() -> None:
@@ -33,7 +25,7 @@ def render() -> None:
     try:
         history = api_client.get_history(access_token)
     except requests.RequestException as exc:
-        _show_backend_error(exc)
+        show_backend_error(exc)
         return
 
     if not history:
@@ -85,4 +77,4 @@ def render() -> None:
                         st.success("Deleted.")
                         st.rerun()
                     except requests.RequestException as exc:
-                        _show_backend_error(exc)
+                        show_backend_error(exc)

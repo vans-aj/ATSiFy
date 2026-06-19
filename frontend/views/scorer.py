@@ -4,6 +4,7 @@ import requests
 import streamlit as st
 
 from frontend.services import api_client
+from frontend.components._helpers import show_backend_error
 from frontend.components.dashboard import display_results_dashboard
 
 
@@ -27,22 +28,6 @@ def _read_jd(jd_file, jd_text: str) -> str:
         "if you have a PDF or DOCX."
     )
     return ""
-
-
-def _show_backend_error(exc: Exception) -> None:
-    """Translate a `requests` exception into a friendly Streamlit error."""
-    if isinstance(exc, requests.ConnectionError):
-        st.error("Could not reach the backend. Is `uvicorn backend.main:app` running on port 8000?")
-    elif isinstance(exc, requests.Timeout):
-        st.error("The backend took too long to respond. Try a smaller resume or check the server logs.")
-    elif isinstance(exc, requests.HTTPError) and exc.response is not None:
-        try:
-            detail = exc.response.json().get("detail", exc.response.text)
-        except ValueError:
-            detail = exc.response.text
-        st.error(f"Backend returned {exc.response.status_code}: {detail}")
-    else:
-        st.error(f"Unexpected error: {exc}")
 
 
 def _summary_text(analysis: dict) -> str:
@@ -131,7 +116,7 @@ def _render_export_buttons(analysis: dict) -> None:
                     )
                 st.session_state["scorer_pdf_bytes"] = pdf_bytes
             except requests.RequestException as exc:
-                _show_backend_error(exc)
+                show_backend_error(exc)
 
         if "scorer_pdf_bytes" in st.session_state:
             st.download_button(
@@ -222,7 +207,7 @@ def render() -> None:
                 job_description=job_description,
             )
     except requests.RequestException as exc:
-        _show_backend_error(exc)
+        show_backend_error(exc)
         return
 
     st.session_state["scorer_analysis"] = analysis

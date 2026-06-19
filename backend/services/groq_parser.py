@@ -106,32 +106,48 @@ def _try_parse_json(text: str) -> dict | None:
         return json.loads(cleaned)
     except json.JSONDecodeError:
         return None
-    
-def parse_resume(raw_text: str)->Dict:
 
-    client=_get_client()
-    prompt=RESUME_USER_PROMPT.format(raw_text=raw_text)
-    raw_response=_call_groq(client, RESUME_SYSTEM_PROMPT, prompt)
-    result=_try_parse_json(raw_response)
 
-    if result is None:
-        return _validate_resume_result(result)
-    
+def _apply_defaults(result: dict, defaults: dict) -> dict:
+    for key, default in defaults.items():
+        if key not in result or result[key] is None:
+            result[key] = default
+        if isinstance(default, list) and not isinstance(result[key], list):
+            result[key] = default
+    return result
 
-    logger.warning("Groq resume parse: first attempt returned invalid JSON, retrying...")
+
+def _call_groq_with_retry(
+    system_prompt: str,
+    user_prompt: str,
+    label: str,
+) -> dict:
+    client = _get_client()
+    raw_response = _call_groq(client, system_prompt, user_prompt)
+    result = _try_parse_json(raw_response)
+    if result is not None:
+        return result
+
+    logger.warning(f"Groq {label}: first attempt returned invalid JSON, retrying...")
     strict_prompt = (
         "Your previous response was not valid JSON. "
         "Return ONLY the raw JSON object, no markdown, no explanation, no code fences.\n\n"
-        + prompt
+        + user_prompt
     )
-    raw_response = _call_groq(client, RESUME_SYSTEM_PROMPT, strict_prompt)
+    raw_response = _call_groq(client, system_prompt, strict_prompt)
     result = _try_parse_json(raw_response)
     if result is not None:
-        return _validate_resume_result(result)
+        return result
 
     raise ValueError(
         f"Groq returned unparseable response after retry. Raw response:\n{raw_response[:500]}"
     )
+
+
+def parse_resume(raw_text: str)->Dict:
+    prompt = RESUME_USER_PROMPT.format(raw_text=raw_text)
+    result = _call_groq_with_retry(RESUME_SYSTEM_PROMPT, prompt, 'resume parse')
+    return _validate_resume_result(result)
     
 JD_SYSTEM_PROMPT = (
     "You are a job description parser. Extract information and "
@@ -160,33 +176,13 @@ Job Description Text:
 {raw_text}"""
 
 def parse_job_description(raw_text: str) -> Dict:
-    client = _get_client()
     prompt = JD_USER_PROMPT.format(raw_text=raw_text)
-
-    raw_response = _call_groq(client, JD_SYSTEM_PROMPT, prompt)
-    result = _try_parse_json(raw_response)
-    if result is not None:
-        return _validate_jd_result(result)
-
-    logger.warning("Groq JD parse: first attempt returned invalid JSON, retrying...")
-    strict_prompt = (
-        "Your previous response was not valid JSON. "
-        "Return ONLY the raw JSON object, no markdown, no explanation, no code fences.\n\n"
-        + prompt
-    )
-    raw_response = _call_groq(client, JD_SYSTEM_PROMPT, strict_prompt)
-    result = _try_parse_json(raw_response)
-    if result is not None:
-        return _validate_jd_result(result)
-
-    raise ValueError(
-        f"Groq returned unparseable response after retry. Raw response:\n{raw_response[:500]}"
-    )
+    result = _call_groq_with_retry(JD_SYSTEM_PROMPT, prompt, 'JD parse')
+    return _validate_jd_result(result)
 
 #it will make sure, that the parse json has all the valid fields we expect
 def _validate_jd_result(result: dict) -> dict:
-    
-    defaults = {
+    return _apply_defaults(result, {
         "job_title": "",
         "required_skills": [],
         "preferred_skills": [],
@@ -194,21 +190,12 @@ def _validate_jd_result(result: dict) -> dict:
         "education_required": "",
         "key_responsibilities": [],
         "keywords": [],
-    }
-
-    for key, default in defaults.items():
-        if key not in result or result[key] is None:
-            result[key] = default
-        if isinstance(default, list) and not isinstance(result[key], list):
-            result[key] = default
-
-    return result
+    })
 
 
 #to make sure the parse json has all the valid json fields
 def _validate_resume_result(result: dict) -> dict:
-
-    defaults = {
+    _apply_defaults(result, {
         "name": "",
         "email": None,
         "phone": None,
@@ -222,14 +209,7 @@ def _validate_resume_result(result: dict) -> dict:
         "projects": [],
         "action_verbs": [],
         "keywords": [],
-    }
-    for key, default in defaults.items():
-        if key not in result or result[key] is None:
-            result[key] = default
-            
-        # Ensure list fields are actually lists
-        if isinstance(default, list) and not isinstance(result[key], list):
-            result[key] = default
+    })
 
     #Validate experience entries
     for exp in result.get("experience", []):
