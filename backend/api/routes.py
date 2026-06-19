@@ -116,6 +116,10 @@ async def analyze_resume(
         await save_analysis(user_id, filename, result)
     except Exception as exc:
         logger.warning(f'History save failed (non-blocking): {exc}')
+        warnings.append(f'Analysis completed but could not be saved to history: {exc}')
+
+    if warnings:
+        response.warnings = warnings
 
     return response
 

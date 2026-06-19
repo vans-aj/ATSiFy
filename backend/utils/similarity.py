@@ -20,9 +20,10 @@ def compute_cosine_similarity(
             text_b = text_b[:max_length]
         vec_a = embedder.encode(text_a, convert_to_tensor=False)
         vec_b = embedder.encode(text_b, convert_to_tensor=False)
-        similarity = np.dot(vec_a, vec_b) / (
-            np.linalg.norm(vec_a) * np.linalg.norm(vec_b)
-        )
+        norm_product = np.linalg.norm(vec_a) * np.linalg.norm(vec_b)
+        if norm_product == 0:
+            return 0.0
+        similarity = np.dot(vec_a, vec_b) / norm_product
         return float(np.clip(similarity, 0.0, 1.0))
     except Exception as e:
         log_warning(f"Similarity error: {e}", context=context)

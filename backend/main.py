@@ -27,10 +27,17 @@ async def lifespan(app:FastAPI):
     try:
         app.state.nlp = spacy.load(SPACY_MODEL_PRIMARY)
         logger.info(f'Loaded {SPACY_MODEL_PRIMARY}')
-    except OSError:
-        logger.warning(f'{SPACY_MODEL_PRIMARY} not found — falling back to {SPACY_MODEL_SECONDARY}')
-        app.state.nlp = spacy.load(SPACY_MODEL_SECONDARY)
-        logger.info(f'Loaded {SPACY_MODEL_SECONDARY} (fallback)')
+    except Exception as primary_err:
+        logger.warning(f'{SPACY_MODEL_PRIMARY} failed ({type(primary_err).__name__}: {primary_err}) — falling back to {SPACY_MODEL_SECONDARY}')
+        try:
+            app.state.nlp = spacy.load(SPACY_MODEL_SECONDARY)
+            logger.info(f'Loaded {SPACY_MODEL_SECONDARY} (fallback)')
+        except Exception as fallback_err:
+            logger.error(f'Both spaCy models failed to load. Primary: {primary_err}; Fallback: {fallback_err}')
+            raise RuntimeError(
+                f'Cannot start API: no spaCy model available. '
+                f'Install one with: python -m spacy download {SPACY_MODEL_PRIMARY}'
+            ) from fallback_err
 
     logger.info(f'Loading SentenceTransformer: {SENTENCE_TRANSFORMER_MODEL}')
     from sentence_transformers import SentenceTransformer
