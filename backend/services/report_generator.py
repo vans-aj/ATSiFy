@@ -1,7 +1,10 @@
+import logging
 import os
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 from typing import Dict
+
+logger = logging.getLogger('ats_resume_scorer')
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), '..', 'templates')
 env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
@@ -13,7 +16,8 @@ def format_date(value, fmt='%B %d, %Y at %I:%M %p'):
     try:
         dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
         return dt.strftime(fmt)
-    except Exception:
+    except Exception as e:
+        logger.warning(f'Failed to parse date value {value!r}: {e}')
         return value
 
 env.filters['format_date'] = format_date

@@ -74,10 +74,10 @@ def _extract_pdf_hyperlinks(file_data: bytes) -> str:
                         uri = uri.strip()
                         if uri.startswith('http'):
                             urls.append(uri)
-                except Exception:
-                    pass
-    except Exception:
-        pass
+                except Exception as e:
+                    log_warning(f'Skipping malformed PDF annotation: {e}', context='resume_parser')
+    except Exception as e:
+        log_warning(f'Could not extract PDF hyperlinks: {e}', context='resume_parser')
     return '\n'.join(urls)
 
 
@@ -174,8 +174,8 @@ def extract_text_from_docx(file_data: bytes) -> str:
                     url = rel._target
                     if isinstance(url, str) and url.startswith('http'):
                         text += '\n' + url
-        except Exception:
-            pass
+        except Exception as e:
+            log_warning(f'Could not extract DOCX hyperlinks: {e}', context='resume_parser')
 
         log_info(f'Extracted {len(text)} chars from DOCX', context='resume_parser')
         return text.strip()
