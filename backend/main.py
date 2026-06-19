@@ -65,10 +65,33 @@ app.include_router(router)
 
 
 
+from pathlib import Path as _Path
+
+_FRONTEND_DIR = _Path(__file__).resolve().parent.parent / 'frontend-new'
+
+if _FRONTEND_DIR.is_dir():
+    app.mount('/static', StaticFiles(directory=str(_FRONTEND_DIR)), name='static-frontend')
+
 @app.get('/')
-async def root(request : Request):
+async def root(request: Request):
+    index = _FRONTEND_DIR / 'index.html'
+    if index.is_file():
+        from fastapi.responses import FileResponse
+        return FileResponse(str(index))
     return {"message": "Welcome to the ATS Resume Analyzer API!"}
-        
+
+
+@app.get('/analyzer')
+@app.get('/history')
+@app.get('/resources')
+async def serve_page(request: Request):
+    from fastapi.responses import FileResponse
+    page_name = request.url.path.strip('/')
+    page_file = _FRONTEND_DIR / f'{page_name}.html'
+    if page_file.is_file():
+        return FileResponse(str(page_file))
+    return FileResponse(str(_FRONTEND_DIR / 'index.html'))
+
 
 if __name__=='__main__':
     import uvicorn

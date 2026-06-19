@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analyzer - ATSiFy</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+</head>
+<body>
+  <button class="sidebar-toggle" id="sidebar-toggle">&#9776;</button>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <div class="app-wrapper">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+      <div class="page-header animate-fade-in-up">
+        <span class="eyebrow">Analysis</span>
+        <h1>Resume Analyzer</h1>
+        <p>Upload a resume, choose the scoring mode, and review a structured ATS report.</p>
+      </div>
+
+      <!-- Workflow bar -->
+      <div class="workflow-bar animate-fade-in-up animate-delay-1">
+        <div class="workflow-step active" id="ws-1">1. Choose mode</div>
+        <div class="workflow-step" id="ws-2">2. Upload resume</div>
+        <div class="workflow-step" id="ws-3">3. Run analysis</div>
+      </div>
+
+      <!-- Mode toggle -->
+      <div class="mode-toggle animate-fade-in-up animate-delay-2">
+        <button class="active" id="mode-general">General ATS Score</button>
+        <button id="mode-jd">Job Description Comparison</button>
+      </div>
+
+      <!-- Upload area -->
+      <div class="upload-grid animate-fade-in-up animate-delay-3">
+        <!-- Resume panel -->
+        <div class="upload-panel">
+          <div class="panel-label">Input file</div>
+          <h3>Upload Resume</h3>
+          <div class="dropzone" id="resume-dropzone">
+            <input type="file" id="resume-input" accept=".pdf,.doc,.docx" />
+            <div class="icon">&#128196;</div>
+            <p>Drag &amp; drop your resume here or click to browse</p>
+            <div class="formats">Supported: PDF, DOC, DOCX (max 5 MB)</div>
+          </div>
+          <div class="file-info hidden" id="resume-file-info"></div>
+        </div>
+
+        <!-- JD panel -->
+        <div class="upload-panel">
+          <div class="panel-label">Target role</div>
+          <h3>Job Description</h3>
+          <div id="jd-area">
+            <div class="alert alert-info" id="jd-disabled-msg">
+              Switch to "Job Description Comparison" mode to enable JD matching.
+            </div>
+            <div class="hidden" id="jd-input-area">
+              <textarea class="jd-textarea" id="jd-text" placeholder="Paste the job description text here..."></textarea>
+              <div id="jd-char-count" style="font-size:.78rem;color:var(--muted);margin-top:.35rem;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auth warning -->
+      <div class="alert alert-warning hidden" id="auth-warning">
+        Sign in from the sidebar to analyze a resume.
+      </div>
+
+      <!-- Analyze button -->
+      <div style="text-align:center; margin: 1.5rem 0;">
+        <button class="btn btn-primary" id="btn-analyze" style="min-width:220px; padding:.8rem 2rem; font-size:1rem;">
+          Analyze Resume
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div class="spinner-wrap hidden" id="loading">
+        <div class="spinner"></div>
+        <div class="spinner-text">Analyzing your resume... this can take 10-30 seconds</div>
+      </div>
+
+      <!-- Results -->
+      <div id="results-container" class="hidden"></div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initSidebar } from '/static/js/sidebar.js';
+    import { isLoggedIn } from '/static/js/auth.js';
+    import { analyzeResume, generatePdf } from '/static/js/api.js';
+
+    initSidebar();
+
+    // ---- state ----
+    let analysisMode = 'general';
+    let selectedFile = null;
+    let analysisResult = null;
+
+    // ---- mode toggle ----
+    const modeGeneral = document.getElementById('mode-general');
+    const modeJd = document.getElementById('mode-jd');
+    const jdDisabledMsg = document.getElementById('jd-disabled-msg');
+    const jdInputArea = document.getElementById('jd-input-area');
+
+    modeGeneral.addEventListener('click', () => {
+      analysisMode = 'general';
+      modeGeneral.classList.add('active');
+      modeJd.classList.remove('active');
+      jdDisabledMsg.classList.remove('hidden');
+      jdInputArea.classList.add('hidden');
+    });
+    modeJd.addEventListener('click', () => {
+      analysisMode = 'jd';
+      modeJd.classList.add('active');
+      modeGeneral.classList.remove('active');
+      jdDisabledMsg.classList.add('hidden');
+      jdInputArea.classList.remove('hidden');
+    });
+
+    // ---- JD character count ----
+    const jdText = document.getElementById('jd-text');
+    const jdCharCount = document.getElementById('jd-char-count');
+    jdText.addEventListener('input', () => {
+      jdCharCount.textContent = `${jdText.value.length} characters`;
+    });
+
+    // ---- file upload ----
+    const dropzone = document.getElementById('resume-dropzone');
+    const fileInput = document.getElementById('resume-input');
+    const fileInfo = document.getElementById('resume-file-info');
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) handleFile(fileInput.files[0]);
+    });
+
+    function handleFile(file) {
+      selectedFile = file;
+      fileInfo.classList.remove('hidden');
+      fileInfo.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+      // Update workflow
+      document.getElementById('ws-2').classList.add('active');
+    }
+
+    // ---- analyze ----
+    const btnAnalyze = document.getElementById('btn-analyze');
+    const loading = document.getElementById('loading');
+    const resultsContainer = document.getElementById('results-container');
+    const authWarning = document.getElementById('auth-warning');
+
+    btnAnalyze.addEventListener('click', async () => {
+      if (!selectedFile) {
+        return alert('Please upload a resume first.');
+      }
+      if (!isLoggedIn()) {
+        authWarning.classList.remove('hidden');
+        return;
+      }
+      authWarning.classList.add('hidden');
+
+      const jd = analysisMode === 'jd' ? jdText.value.trim() : '';
+
+      loading.classList.remove('hidden');
+      resultsContainer.classList.add('hidden');
+      btnAnalyze.disabled = true;
+      document.getElementById('ws-3').classList.add('active');
+
+      try {
+        analysisResult = await analyzeResume(selectedFile, jd);
+        renderResults(analysisResult);
+      } catch (err) {
+        resultsContainer.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+        resultsContainer.classList.remove('hidden');
+      } finally {
+        loading.classList.add('hidden');
+        btnAnalyze.disabled = false;
+      }
+    });
+
+    // ---- render results ----
+    function renderResults(analysis) {
+      const score = analysis.ATS_score || analysis.ats_score || 0;
+      const interp = analysis.interpretation || '';
+      const scoreClass = score >= 80 ? 'good' : score >= 60 ? 'mid' : 'low';
+      const scoreLabel = score >= 90 ? 'Excellent' : score >= 80 ? 'Strong' : score >= 70 ? 'Good' : score >= 60 ? 'Needs Work' : 'High Priority';
+      const scoreColor = score >= 80 ? '#34d399' : score >= 60 ? '#fbbf24' : '#fb7185';
+
+      const cs = analysis.component_scores || {};
+      const comps = [
+        { label: 'Formatting', key: 'formatting', max: 20 },
+        { label: 'Keywords & Skills', key: 'keywords', max: 25 },
+        { label: 'Content Quality', key: 'content', max: 25 },
+        { label: 'Skill Validation', key: 'skill_validation', max: 15 },
+        { label: 'ATS Compatibility', key: 'ats_compatibility', max: 15 },
+      ];
+
+      let html = `<div class="results-section animate-fade-in-up">`;
+
+      // Score hero
+      html += `
+        <h2 class="section-title">Analysis Results</h2>
+        <div class="score-hero ${scoreClass} animate-scale-in">
+          <div class="score-label-text" style="color:${scoreColor};">${scoreLabel}</div>
+          <div class="score-number" style="color:${scoreColor};">${Math.round(score)}</div>
+          <div class="score-subtitle" style="color:${scoreColor};">Overall ATS Score</div>
+          ${interp ? `<div class="score-interpretation">${interp}</div>` : ''}
+        </div>
+      `;
+
+      // Score breakdown
+      html += `<div class="section-divider"></div><h3 class="section-title">Score Breakdown</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">`;
+      comps.forEach(c => {
+        const val = cs[c.key] || 0;
+        const pct = c.max ? (val / c.max) * 100 : 0;
+        const barClass = pct >= 80 ? 'good' : pct >= 60 ? 'mid' : 'low';
+        html += `
+          <div class="progress-row">
+            <div class="row-header">
+              <strong>${c.label}</strong>
+              <span>${Math.round(val)}/${c.max}</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill ${barClass}" style="width:${Math.min(Math.max(pct,0),100)}%;"></div>
+            </div>
+          </div>
+        `;
+      });
+      html += `</div>`;
+
+      // Strengths
+      const strengths = analysis.strengths || [];
+      if (strengths.length) {
+        html += `<div class="section-divider"></div><h3 class="section-title">Strengths</h3><div class="card stagger">`;
+        strengths.forEach(s => { html += `<p style="color:var(--success);margin-bottom:.35rem;">&#10003; ${s}</p>`; });
+        html += `</div>`;
+      }
+
+      // Critical issues
+      const critical = analysis.critical_issues || [];
+      const summary = analysis.issues_summary || [];
+      if (critical.length || summary.length) {
+        html += `<div class="section-divider"></div><h3 class="section-title">Critical Issues</h3>
+          <div class="alert alert-error" style="margin-bottom:.75rem;">These issues should be addressed first for better ATS performance.</div>`;
+        critical.forEach(c => { html += `<p style="color:var(--danger);margin-bottom:.3rem;">&#10007; ${c}</p>`; });
+        const extra = summary.filter(s => !critical.includes(s));
+        if (extra.length) {
+          html += `<div class="collapsible-header" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open');">
+            Additional flagged items (${extra.length}) <span class="chevron">&#9660;</span></div>
+            <div class="collapsible-body"><div class="collapsible-body-inner">`;
+          extra.forEach(e => { html += `<p style="margin-bottom:.25rem;">&#8226; ${e}</p>`; });
+          html += `</div></div>`;
+        }
+      }
+
+      // Skill validation
+      const svd = analysis.skill_validation_details || {};
+      const validated = svd.validated || [];
+      const unvalidated = svd.unvalidated || [];
+      const totalSkills = svd.total || (validated.length + unvalidated.length);
+      const valPct = svd.validation_pct || 0;
+      if (totalSkills > 0) {
+        html += `<div class="section-divider"></div><h3 class="section-title">Skill Validation</h3>`;
+        html += `<div class="skill-metrics">
+          <div class="metric-item"><div class="label">Total</div><div class="value">${totalSkills}</div></div>
+          <div class="metric-item"><div class="label">Validated</div><div class="value">${validated.length}</div></div>
+          <div class="metric-item"><div class="label">Validation</div><div class="value">${Math.round(valPct)}%</div></div>
+        </div>`;
+        html += `<div class="progress-row"><div class="progress-track"><div class="progress-fill ${valPct >= 80 ? 'good' : valPct >= 60 ? 'mid' : 'low'}" style="width:${Math.min(valPct,100)}%;"></div></div></div>`;
+
+        if (validated.length) {
+          html += `<div class="collapsible-header" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open');">
+            Validated skills (${validated.length}) <span class="chevron">&#9660;</span></div>
+            <div class="collapsible-body"><div class="collapsible-body-inner">`;
+          validated.forEach(v => {
+            const skill = v.skill || '?';
+            const projs = (v.projects || []).slice(0, 3).join(', ') || 'experience section';
+            const sim = typeof v.similarity === 'number' ? ` (${Math.round(v.similarity * 100)}% match)` : '';
+            html += `<div class="skill-item"><span class="dot valid"></span><strong>${skill}</strong>${sim}: ${projs}</div>`;
+          });
+          html += `</div></div>`;
+        }
+        if (unvalidated.length) {
+          html += `<div class="collapsible-header" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open');">
+            Unvalidated skills (${unvalidated.length}) <span class="chevron">&#9660;</span></div>
+            <div class="collapsible-body"><div class="collapsible-body-inner">`;
+          unvalidated.forEach(s => { html += `<div class="skill-item"><span class="dot invalid"></span>${s}</div>`; });
+          html += `</div></div>`;
+        }
+      }
+
+      // JD comparison
+      const jdc = analysis.jd_comparison || analysis.jd_match_analysis;
+      if (jdc) {
+        const matchPct = jdc.match_percentage || 0;
+        const semSim = jdc.semantic_similarity || 0;
+        const matched = jdc.matched_keywords || [];
+        const missing = jdc.missing_keywords || [];
+        const gap = jdc.skills_gap || [];
+
+        html += `<div class="section-divider"></div><h3 class="section-title">Job Description Match</h3>`;
+        html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+          <div>
+            <div class="progress-row"><div class="row-header"><strong>Match Percentage</strong><span>${Math.round(matchPct)}%</span></div>
+              <div class="progress-track"><div class="progress-fill ${matchPct >= 70 ? 'good' : matchPct >= 50 ? 'mid' : 'low'}" style="width:${matchPct}%;"></div></div></div>
+            <div class="progress-row"><div class="row-header"><strong>Semantic Similarity</strong><span>${Math.round(semSim * 100)}%</span></div>
+              <div class="progress-track"><div class="progress-fill ${semSim >= .7 ? 'good' : semSim >= .5 ? 'mid' : 'low'}" style="width:${semSim * 100}%;"></div></div></div>
+          </div>
+          <div>
+            <strong style="font-size:.88rem;">Matched keywords</strong>
+            <div style="margin-top:.4rem;">${matched.length ? matched.slice(0, 15).map(k => `<span class="tag matched">${k}</span>`).join('') : '<span style="color:var(--muted);">None matched yet</span>'}</div>
+          </div>
+        </div>`;
+        html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1rem;">
+          <div>
+            <strong style="font-size:.88rem;">Missing keywords</strong>
+            <div style="margin-top:.4rem;">${missing.length ? missing.slice(0, 10).map(k => `<span class="tag missing">${k}</span>`).join('') : '<span style="color:var(--muted);">All key terms present!</span>'}</div>
+          </div>
+          <div>
+            <strong style="font-size:.88rem;">Skills gap</strong>
+            <div style="margin-top:.4rem;">${gap.length ? gap.slice(0, 10).map(k => `<span class="tag gap">${k}</span>`).join('') : '<span style="color:var(--muted);">No significant gap detected</span>'}</div>
+          </div>
+        </div>`;
+      }
+
+      // Detailed feedback
+      const feedback = analysis.detailed_feedback || [];
+      if (feedback.length) {
+        html += `<div class="section-divider"></div><h3 class="section-title">Detailed Feedback</h3>
+          <p style="color:var(--muted);font-size:.85rem;margin-bottom:.75rem;">${feedback.length} issue(s) flagged, grouped by severity.</p>`;
+
+        const severityOrder = ['critical', 'high', 'medium', 'low'];
+        const grouped = {};
+        severityOrder.forEach(l => grouped[l] = []);
+        feedback.forEach(fb => {
+          const lvl = (fb.severity_level || 'low').toLowerCase();
+          (grouped[lvl] = grouped[lvl] || []).push(fb);
+        });
+
+        severityOrder.forEach(level => {
+          const items = grouped[level] || [];
+          if (!items.length) return;
+          const severityLabel = level === 'critical' || level === 'high' ? 'High' : level === 'medium' ? 'Medium' : 'Low';
+          const severityColor = level === 'critical' || level === 'high' ? 'var(--danger)' : level === 'medium' ? 'var(--warning)' : 'var(--success)';
+          const sevClass = level === 'critical' || level === 'high' ? 'issue-high' : level === 'medium' ? 'issue-medium' : 'issue-low';
+
+          html += `<h4 style="margin:1rem 0 .5rem;font-size:.92rem;">${level.charAt(0).toUpperCase() + level.slice(1)} (${items.length})</h4>`;
+          items.forEach((fb, i) => {
+            const uid = `fb-${level}-${i}`;
+            html += `
+              <div class="issue-block ${sevClass}">
+                <div class="issue-header" onclick="document.getElementById('${uid}').classList.toggle('open');">
+                  <strong style="color:${severityColor};">${severityLabel}: ${fb.issue_title || 'Issue'}</strong>
+                  <span class="impact">${fb.ats_impact || ''}</span>
+                </div>
+                <div class="issue-details" id="${uid}"><div class="issue-details-inner">
+                  ${fb.explanation ? `<p><strong>What's happening:</strong> ${fb.explanation}</p>` : ''}
+                  ${fb.where_it_appears ? `<p><strong>Where:</strong> ${fb.where_it_appears}</p>` : ''}
+                  ${fb.how_to_fix ? `<p><strong>How to fix:</strong> ${fb.how_to_fix}</p>` : ''}
+                  ${(fb.action_items || []).length ? `<p><strong>Action items:</strong></p><ul style="list-style:disc;padding-left:1.2rem;">${fb.action_items.map(a => `<li>${a}</li>`).join('')}</ul>` : ''}
+                  ${fb.example_improvement ? `<p><strong>Example:</strong></p><code>${fb.example_improvement}</code>` : ''}
+                </div></div>
+              </div>
+            `;
+          });
+        });
+      }
+
+      // Action items
+      const actionItems = [];
+      (analysis.detailed_feedback || []).forEach(fb => {
+        const lvl = (fb.severity_level || 'low').toLowerCase();
+        (fb.action_items || []).forEach(a => actionItems.push({ level: lvl, source: fb.issue_title || '', action: a }));
+      });
+      if (!actionItems.length) {
+        (analysis.suggestions || []).forEach(s => actionItems.push({ level: 'medium', source: 'General', action: s }));
+      }
+      const sevRank = { critical: 0, high: 1, medium: 2, low: 3 };
+      actionItems.sort((a, b) => (sevRank[a.level] ?? 99) - (sevRank[b.level] ?? 99));
+
+      if (actionItems.length) {
+        html += `<div class="section-divider"></div><h3 class="section-title">Action Items</h3>
+          <p style="color:var(--muted);font-size:.85rem;margin-bottom:.75rem;">Concrete steps to improve your score, sorted by urgency.</p>`;
+        actionItems.forEach(ai => {
+          const badgeClass = ai.level === 'critical' || ai.level === 'high' ? 'badge-danger' : ai.level === 'medium' ? 'badge-warning' : 'badge-success';
+          html += `<div style="display:flex;align-items:flex-start;gap:.5rem;margin-bottom:.5rem;">
+            <span class="badge ${badgeClass}">${ai.level}</span>
+            <span style="font-size:.88rem;"><strong>${ai.source}:</strong> ${ai.action}</span>
+          </div>`;
+        });
+      }
+
+      // Recommendations
+      const suggestions = analysis.suggestions || [];
+      if (suggestions.length) {
+        html += `<div class="section-divider"></div><h3 class="section-title">Recommendations</h3>`;
+        suggestions.forEach(s => { html += `<p style="color:var(--ink-soft);margin-bottom:.35rem;">&#8226; ${s}</p>`; });
+      }
+
+      // Export
+      html += `
+        <div class="export-bar">
+          <button class="btn btn-primary" id="btn-pdf">Generate PDF Report</button>
+          <button class="btn" id="btn-txt">Download Summary (.txt)</button>
+        </div>
+      `;
+
+      html += `</div>`;
+
+      resultsContainer.innerHTML = html;
+      resultsContainer.classList.remove('hidden');
+
+      // Export handlers
+      document.getElementById('btn-pdf')?.addEventListener('click', async () => {
+        try {
+          const blob = await generatePdf(analysisResult);
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = 'ats_resume_report.pdf'; a.click();
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          alert('PDF generation failed: ' + err.message);
+        }
+      });
+
+      document.getElementById('btn-txt')?.addEventListener('click', () => {
+        const lines = [`ATS Score: ${Math.round(score)}/100`, ''];
+        if (strengths.length) { lines.push('STRENGTHS:'); strengths.forEach(s => lines.push(`  - ${s}`)); lines.push(''); }
+        if (critical.length) { lines.push('CRITICAL ISSUES:'); critical.forEach(s => lines.push(`  - ${s}`)); lines.push(''); }
+        if (suggestions.length) { lines.push('SUGGESTIONS:'); suggestions.forEach(s => lines.push(`  - ${s}`)); }
+        const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'ats_summary.txt'; a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
+  </script>
+</body>
+</html>
