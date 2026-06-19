@@ -7,7 +7,7 @@ font = "sans serif"
 
 [server]
 maxUploadSize = 10
-enableXsrfProtection = false
+enableXsrfProtection = true
 enableCORS = false
 headless = true
 
