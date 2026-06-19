@@ -1,9 +1,8 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI,Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from backend.core.config import(
     ALLOWED_ORIGINS, 
     APP_DESCRIPTION, 
@@ -43,22 +42,23 @@ async def lifespan(app:FastAPI):
 
     logger.info('shutting down the api!!')
 
+_is_production = os.getenv('ENVIRONMENT', 'development').lower() == 'production'
+
 app=FastAPI(
     title=APP_TITLE, 
     description=APP_DESCRIPTION, 
     version=APP_VERSION, 
     lifespan=lifespan,
-    docs_url='/docs',
-    redoc_url='/redoc'
+    docs_url=None if _is_production else '/docs',
+    redoc_url=None if _is_production else '/redoc',
 )
 
 app.add_middleware(
     CORSMiddleware, 
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True, 
-    allow_methods     = ['*'],
-    allow_headers     = ['*'],
-
+    allow_methods     = ['GET', 'POST', 'DELETE', 'OPTIONS'],
+    allow_headers     = ['Authorization', 'Content-Type'],
 )
 
 app.include_router(router)

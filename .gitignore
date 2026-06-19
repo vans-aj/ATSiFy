@@ -1,5 +1,31 @@
+# Environment / secrets
 .env
-atsify
+.env.*
+!.env.example
+secrets.toml
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Virtual environments
+atsify/
+venv/
+.venv/
+
+# ML model artifacts
 .FineTunnedModel
 FineTunnedModel/
-/backend/logs
+
+# Logs
+backend/logs/
+*.log
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

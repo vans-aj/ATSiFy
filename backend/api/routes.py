@@ -51,7 +51,7 @@ async def analyze_resume(
         logger.error(f'File parsing failed: {exc}')
         raise HTTPException(
             status_code=422,
-            detail=f'Could not read or parse the resume: {exc}',
+            detail='Could not read or parse the uploaded resume. Please ensure it is a valid PDF or DOCX file.',
         )
 
     #Full Analysis Pipeline 
@@ -66,7 +66,7 @@ async def analyze_resume(
         )
     except Exception as exc:
         logger.error(f'Full analysis pipeline failed: {exc}')
-        raise HTTPException(status_code=500, detail=f'Analysis pipeline failed: {exc}')
+        raise HTTPException(status_code=500, detail='Analysis pipeline encountered an internal error. Please try again later.')
 
     #Extract jd_comparison details
     jd_comparison_result = None
@@ -136,7 +136,7 @@ async def get_history(user_id: str = Depends(get_current_user)):
         return await get_user_history(user_id)
     except Exception as exc:
         logger.error(f'History fetch failed: {exc}')
-        raise HTTPException(status_code=500, detail=f'Could not load history: {exc}')
+        raise HTTPException(status_code=500, detail='Could not load history. Please try again later.')
 
 
 @router.delete('/history/{analysis_id}')
@@ -155,7 +155,7 @@ async def delete_history_entry(
         raise
     except Exception as exc:
         logger.error(f'History delete failed: {exc}')
-        raise HTTPException(status_code=500, detail=f'Could not delete: {exc}')
+        raise HTTPException(status_code=500, detail='Could not delete the analysis. Please try again later.')
     
 
 @router.post('/generate-pdf')
@@ -181,7 +181,7 @@ async def generate_pdf(
         )
     except Exception as e:
         logger.error(f'Failed to generate PDF: {e}')
-        raise HTTPException(status_code=500, detail=f"Failed to generate PDF: {e}")
+        raise HTTPException(status_code=500, detail='Failed to generate PDF report. Please try again later.')
     
 
 @router.get('/history/{analysis_id}/pdf')
@@ -216,4 +216,4 @@ async def generate_history_pdf(
         raise
     except Exception as e:
         logger.error(f'Failed to generate PDF for history: {e}')
-        raise HTTPException(status_code=500, detail=f"Failed to generate PDF: {e}")
+        raise HTTPException(status_code=500, detail='Failed to generate PDF report. Please try again later.')
